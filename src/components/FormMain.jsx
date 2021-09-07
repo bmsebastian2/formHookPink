@@ -1,8 +1,7 @@
 import React from "react";
 import TextField from "@material-ui/core/TextField";
 import Button from "@material-ui/core/Button";
-import Box from '@material-ui/core/Box'
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { makeStyles, createStyles } from "@material-ui/core/styles";
 import { useState, useEffect } from "react";
 import InputLabel from '@material-ui/core/InputLabel';
@@ -19,7 +18,6 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import Slider from '@material-ui/core/Slider';
 
 const useStyles = makeStyles((theme) =>
-
 
 createStyles({
     styleForm: {
@@ -38,6 +36,7 @@ createStyles({
       display :'flex',
       justifyContent: 'space-between',
       marginTop: '2rem',
+      
       [theme.breakpoints.down(750)]: {
         display : 'flex',
         flexDirection : 'column'
@@ -65,8 +64,12 @@ const FormMain = () => {
   //           })           
   //   }
   const resetForm = () => {
-        
-        
+        setSexo('femenino')
+        setZonas('');
+        setNota({nota: '', estado : null});
+        setZonas({zona: '', estado : null})
+        setState({covid: true, manual: false, herramienta: false,})
+        reset()
      }
 
   const onSubmit = (data) => {
@@ -74,15 +77,9 @@ const FormMain = () => {
         data.manual = manual
         data.herramienta = herramienta
         data.sexo = sexo
-        setSexo('femenino')
-        setZonas('');
-        setNota({nota: '', estado : null});
-        setZonas({zona: '', estado : null})
-        setState({covid: true, manual: false, herramienta: false,})
-
-        console.log(data)
-        reset()
-        
+        data.tiempo = tiempo
+        resetForm()
+        console.log(data)               
         setFocus("email");
     }
   useEffect(() => {
@@ -103,15 +100,19 @@ const FormMain = () => {
   const {covid, manual, herramienta} = state;
   const error = [covid, manual, herramienta].filter((v) => v).length !== 2;
   const [sexo, setSexo] = useState('femenino');
+  const [tiempo, setTiempo] = useState(10)
   const handleChange = (event) => {
     setState({ ...state, [event.target.name]: event.target.checked });
   };
   const handleChangesexo = (event) => {
     setSexo(event.target.value);
   };
-  function valuetext(value) {
-    return `${value}°C`;
+  const  valuetext = (event,newValue) => {    
+    setTiempo(newValue)        
   }
+  useEffect(() => {
+  
+  }, [])
 
   return (
   <div className = {classes.styleForm}>
@@ -123,13 +124,13 @@ const FormMain = () => {
                     name = 'email' 
                     id="standard-basic" 
                     label= 'Email'
-                    style={{ margin: 8 }}
+                    style={ { margin: 8 } }
                     placeholder = 'ejemplo@correo.com'
                     value = { email.value }
                     {...register("email", {required : true, pattern : expresiones.email})}
                     // onChange = {(event)=>onChange(event,setEmail)}
                     helperText= {
-                      (errors.email?.type === 'required')?'El correo es requerido'
+                       (errors.email?.type === 'required')?'El correo es requerido'
                       :(errors.email?.type === 'pattern')?'El correo no tiene el formato adecuado'
                       :''                      
                     }                    
@@ -142,7 +143,7 @@ const FormMain = () => {
                     name = 'celular'                               
                     id="standard-basic" 
                     label="Celular"
-                    style={{ margin: 8 }} 
+                    style={ { margin: 8 } } 
                     placeholder = '066555666'
                     value = { celular.value }
                     {...register("celular",{required : true, maxLength : 14, minLength : 9, pattern : expresiones.celular})}
@@ -162,7 +163,7 @@ const FormMain = () => {
                     name = 'cedula'
                     id="standard-basic"
                     label='Cedula'
-                    style={{ margin: 8 }}
+                    style={ { margin: 8 } }
                     placeholder = '12345678'
                     value = { cedula.value } 
                   {...register("cedula",{required : true, minLength: 7, maxLength: 8, pattern : expresiones.celular})}
@@ -173,15 +174,15 @@ const FormMain = () => {
                     :(errors.cedula?.type === 'minLength')?'Cedula minimo 7 caracteres'
                     :''                      
                 } 
-                  error={errors.cedula && true} 
-            />
+                     error={errors.cedula && true} 
+               />
           <TextField  
                     fullWidth
                     autoComplete = 'off'
                     name = 'nota'
                     id="outlined-multiline-static"
                     label="Nota"
-                    style={{ margin: 8 }}
+                    style={ { margin: 8 } }
                     placeholder = 'Nota'
                     value = { nota.value }
                     multiline
@@ -194,8 +195,7 @@ const FormMain = () => {
                     } 
                     error={errors.nota && true}
                     variant="outlined"
-        />
-
+               />
                 
                 <InputLabel shrink id="demo-simple-select-placeholder-label-label" style={{ marginTop: 8 }}>
                   Zonas
@@ -220,8 +220,7 @@ const FormMain = () => {
                       <MenuItem value={'B'}>Zona B</MenuItem>
                     </Select>
                     {/* <FormHelperText>Label + placeholder</FormHelperText> */}
-                  
-                    
+                 
                     <div className={classes.formControl}>
                           <FormControl component="fieldset" >
                             <FormLabel component="legend">Estatus control:</FormLabel>
@@ -266,20 +265,24 @@ const FormMain = () => {
                         <Typography id="discrete-slider-small-steps" gutterBottom>
                            Tiempo de espera
                         </Typography>
-                        <Slider
-                          defaultValue={10}
-                          getAriaValueText={valuetext}
-                          aria-labelledby="discrete-slider-small-steps"
-                          step={1}
-                          marks
-                          min={0}
-                          max={20}
+                        <Slider                                              
+                          value={tiempo} 
+                          onChange={valuetext}                        
+                          aria-labelledby="continuous-slider"
                           valueLabelDisplay="auto"
-                        />
+                          min={0}
+                          step={1}
+                          max={20}
+                          marks
+                          name = 'tiempo'                      
+                          
+ 
+                          />
+                        
                     </div>
 
 
-
+                  
                     
                 
               
@@ -293,7 +296,7 @@ const FormMain = () => {
             PROBAR
           </Button>
             
-          <Button variant="contained"   onClick={resetForm}>
+          <Button variant="contained"  onClick={()=>console.log(tiempo)}>
             LIMPIAR
           </Button>
 

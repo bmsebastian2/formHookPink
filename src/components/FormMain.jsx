@@ -16,38 +16,39 @@ import Checkbox from '@material-ui/core/Checkbox';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Slider from '@material-ui/core/Slider';
+import {agregarPersona, db} from '../firebase';
+
 
 const useStyles = makeStyles((theme) =>
 
 createStyles({
-    styleForm: {
-         display : 'grid',
-         gridTemplateColumns : '1fr 1fr',
-        // border : '1px solid black',
-             
+    
+  styleForm : {
+        margin   : '0.2rem' ,
+        
+     },
+    
+  formControl : {
+        display :'flex',
+        justifyContent: 'space-between',
+        marginTop: '1rem',
+        
         [theme.breakpoints.down(750)]: {
-            display : 'flex',
-            flexDirection : 'column'
-          },
-          
-     
+          display : 'flex',
+          flexDirection : 'column'
+        },
     },
-    formControl: {
-      display :'flex',
-      justifyContent: 'space-between',
-      marginTop: '2rem',
-      
-      [theme.breakpoints.down(750)]: {
-        display : 'flex',
-        flexDirection : 'column'
-      },
-    },
+  cajaBoton : {
+    textAlign:'center',
+  
+  }
     
   
   })
 );
 
-const FormMain = () => {
+const FormMain = ({setListPerson, botonEditarId,setBotonEditarId}) => {
+
   
   const classes = useStyles();
   
@@ -69,22 +70,22 @@ const FormMain = () => {
         setNota({nota: '', estado : null});
         setZonas({zona: '', estado : null})
         setState({covid: true, manual: false, herramienta: false,})
+        setTiempo(10);
+        
         reset()
      }
 
-  const onSubmit = (data) => {
+  const onSubmit =  (data) => {
         data.covid = covid
         data.manual = manual
         data.herramienta = herramienta
         data.sexo = sexo
-        data.tiempo = tiempo
-        resetForm()
-        console.log(data)               
+        data.tiempo = tiempo       
+        agregarPersona(data);
+        resetForm()       
         setFocus("email");
     }
-  useEffect(() => {
-        setFocus("email");
-      }, [setFocus]);
+ 
   
  
   const [email, setEmail] = useState({email : '', estado : null })
@@ -110,9 +111,33 @@ const FormMain = () => {
   const  valuetext = (event,newValue) => {    
     setTiempo(newValue)        
   }
-  useEffect(() => {
+  const getPers = () => {   
+    db.collection('personas').onSnapshot((querySnapshoty)=>{
+      const arr = [];
+      querySnapshoty.forEach((doc) => {
+        arr.push( {...doc.data(), id : doc.id } )  
+      })
+      setListPerson(arr);
+    })
+    
+  }
   
-  }, [])
+   useEffect(() => {
+        
+        setFocus("email");
+        getPers();
+      }, []);
+      
+    useEffect(() => {
+      let objeto = {}
+      if (botonEditarId!=null){
+        objeto = db.collection('personas').doc(botonEditarId).get();
+        objeto.then((e)=>console.log(e.data()))
+      }else{
+
+      }
+
+    }, [botonEditarId])
 
   return (
   <div className = {classes.styleForm}>
@@ -124,7 +149,7 @@ const FormMain = () => {
                     name = 'email' 
                     id="standard-basic" 
                     label= 'Email'
-                    style={ { margin: 8 } }
+                    style={ { margin: 6 } }
                     placeholder = 'ejemplo@correo.com'
                     value = { email.value }
                     {...register("email", {required : true, pattern : expresiones.email})}
@@ -143,7 +168,7 @@ const FormMain = () => {
                     name = 'celular'                               
                     id="standard-basic" 
                     label="Celular"
-                    style={ { margin: 8 } } 
+                    style={ { margin: 6 } } 
                     placeholder = '066555666'
                     value = { celular.value }
                     {...register("celular",{required : true, maxLength : 14, minLength : 9, pattern : expresiones.celular})}
@@ -163,7 +188,7 @@ const FormMain = () => {
                     name = 'cedula'
                     id="standard-basic"
                     label='Cedula'
-                    style={ { margin: 8 } }
+                    style={ { margin: 6 } }
                     placeholder = '12345678'
                     value = { cedula.value } 
                   {...register("cedula",{required : true, minLength: 7, maxLength: 8, pattern : expresiones.celular})}
@@ -182,7 +207,7 @@ const FormMain = () => {
                     name = 'nota'
                     id="outlined-multiline-static"
                     label="Nota"
-                    style={ { margin: 8 } }
+                    style={ { margin: 6 } }
                     placeholder = 'Nota'
                     value = { nota.value }
                     multiline
@@ -218,23 +243,22 @@ const FormMain = () => {
                       <MenuItem value={'A2'}>Zona A2</MenuItem>
                       <MenuItem value={'A3'}>Zona A3</MenuItem>
                       <MenuItem value={'B'}>Zona B</MenuItem>
-                    </Select>
-                    {/* <FormHelperText>Label + placeholder</FormHelperText> */}
-                 
+                </Select>
+                              
                     <div className={classes.formControl}>
                           <FormControl component="fieldset" >
                             <FormLabel component="legend">Estatus control:</FormLabel>
                             <FormGroup>
                               <FormControlLabel
-                                control={<Checkbox checked={covid} onChange={handleChange} name="covid" />}
+                                control={<Checkbox checked={covid} onChange={handleChange} name="covid" value={covid.value}/>}
                                 label="Certificado Vacuna Covid"
                               />
                               <FormControlLabel
-                                control={<Checkbox checked={manual} onChange={handleChange} name="manual" />}
+                                control={<Checkbox checked={manual} onChange={handleChange} name="manual" value={covid.manual}/>}
                                 label="Manual COV-02C"
                               />
                               <FormControlLabel
-                                control={<Checkbox checked={herramienta} onChange={handleChange} name="herramienta" />}
+                                control={<Checkbox checked={herramienta} onChange={handleChange} name="herramienta" value={covid.herramienta} />}
                                 label="Herramienta/Uniforme"
                               />
                             </FormGroup>
@@ -248,10 +272,8 @@ const FormMain = () => {
                                 aria-label="gender" 
                                 name="sexo" 
                                 value={sexo} 
-                                onChange={handleChangesexo}
-                                
-                                >
-                              
+                                onChange={handleChangesexo}                                
+                                >                              
                               <FormControlLabel value="femenino" control={<Radio />} label="Femenino" />
                               <FormControlLabel value="masculino" control={<Radio />} label="Masculino" />
                               <FormControlLabel value="otro" control={<Radio />} label="Otro" />
@@ -259,7 +281,8 @@ const FormMain = () => {
                             </RadioGroup>
                           </FormControl>
                    </div>
-                    <hr style={{marginTop:'1.5rem',marginBottom:'1.5rem'}}/> 
+
+                    <hr style={{marginTop:'1rem',marginBottom:'1rem'}}/> 
                    
                     <div style= {{textAlign:'center'}}>
                         <Typography id="discrete-slider-small-steps" gutterBottom>
@@ -274,32 +297,39 @@ const FormMain = () => {
                           step={1}
                           max={20}
                           marks
-                          name = 'tiempo'                      
-                          
- 
-                          />
-                        
+                          name = 'tiempo'                     
+                          />                        
                     </div>
-
-
-                  
-                    
-                
-              
-                 
-     
-          
             
-        <div className = {classes.cajaBoton} style={{marginTop:'1.5rem'}}>
+        <div className = {classes.cajaBoton} style={{marginTop:'1rem'}}>
         
-          <Button variant="contained" color="primary" type="submit">
-            PROBAR
-          </Button>
+      
+          {
+            (botonEditarId!=null)?
+            <Button variant="contained"   style={{background:'#ff8f00'}} onClick={()=>console.log(botonEditarId)}>
+               EDITAR
+            </Button>    
+              
+              :
+            <Button variant="contained" color="primary" type="submit">
+                ENVIAR
+            </Button>
+          
+          }
             
-          <Button variant="contained"  onClick={()=>console.log(tiempo)}>
+          <Button variant="contained"  style={{marginLeft:'1rem'}} onClick={()=>resetForm()}>
             LIMPIAR
           </Button>
-
+        <div className="">
+          {
+            (botonEditarId!=null)?
+           
+                <Button variant="text" onClick={()=>setBotonEditarId(null)}>Agregar nuevo</Button>
+              :
+              ''
+          
+          }
+        </div>
        </div>
       
     </form>
